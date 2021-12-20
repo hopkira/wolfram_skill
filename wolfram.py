@@ -3,29 +3,50 @@
 #
 import requests
 from secrets import *
-    req_dict = {}
-    req_dict['units'] = args.get('units')
-    req_dict['geolocation'] = args.get('geolocation')
-    if args.get('appid'):
-        req_dict['appid'] = args.get('appid')
-    else:
-        return {'result':'Query not authorised'}
+
+def main():
+    s = None
+    base_url = "http://api.wolframalpha.com/v1/conversation.jsp"
+    append_url = "/api/v1/conversation.jsp"
+    conversationID = None
+    while True:
+        i = input("\nWhat is your question?\n")
+        if i == "quit": break
+        response = ask_question(i, base_url, conversationID, s)
+        if "conversationID" in response:
+            conversationID = response["conversationID"]
+        if "host" in response:
+            base_url = "http://" + response["host"] + append_url
+        if "s" in response:
+            s = response["s"]
+        if "result" in response:
+            print("\n",response["result"],"\n")
+
+def ask_question(question_string, base_url, conversationID = None, s = None):
+    req_dict =  {}
+    req_dict ['i'] = question_string
+    req_dict['geolocation'] = geolocation
+    req_dict['appid'] = appid
+    req_dict['units'] = "metric"
+    req_dict['host'] = base_url
+    if conversationID is not None:
+        req_dict['conversationID'] = conversationID
+    if s is not None:
+        req_dict ['s'] = s
     # Are we in a conversation? If so then direct to correct host
     # and the right conversation
-    url_base = "http://api.wolframalpha.com/v1/conversation.jsp"
-    if args.get('host'):
-        url_base = args.get('host')
-        req_dict['conversationID'] = args.get('conversationID')
-    if args.get('i'):
-        req_dict['i'] = args.get('i')
-    else"
-        return {"result":"I did not hear a query"}
-    try:
-        r = requests.get(url_base, params=req_dict)
-        return r.json()
-    except Exception:
-        return {"result":"I do not know the answer"}
+    r = requests.get(base_url, params = req_dict)
+    # print(r.json())
+    result = r.json()
+    if 'error' in result :
+        result['result'] = "I do not know the answer"
+    if "Wolfram" in result['result']:
+        result['result'] = "My name is K9. That question is irrelevant."
+    # print(result)
+    return result
+    #except Exception:
+    #    req_dict['result'] = "I do not know the answer"
+    #    return req_dict
 
 if __name__ == '__main__':
-    empty_dict={}
-    main(empty_dict)
+    main()
